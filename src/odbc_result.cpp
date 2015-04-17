@@ -59,7 +59,7 @@ void ODBCResult::Init(v8::Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(t, "getColumnNamesSync", GetColumnNamesSync);
 
   // Properties
-  NanSetAccessor(instance_template, NanNew<String>("fetchMode"), FetchModeGetter, FetchModeSetter);
+  instance_template->SetAccessor(NanNew<String>("fetchMode"), FetchModeGetter, FetchModeSetter);
   
   // Attach the Database Constructor to the target object
   target->Set( NanNew<String>("ODBCResult"),
@@ -500,7 +500,7 @@ void ODBCResult::UV_AfterFetchAll(uv_work_t* work_req, int status) {
     data->errorCount++;
     
     NanAssignPersistent(data->objError,
-      NanNew<Object>(
+      NanNew(
         ODBC::GetSQLError(
           SQL_HANDLE_STMT, 
           self->m_hSTMT,
@@ -517,19 +517,18 @@ void ODBCResult::UV_AfterFetchAll(uv_work_t* work_req, int status) {
   }
   else {
     if (data->fetchMode == FETCH_ARRAY) {
-      NanAssignPersistent(data->rows, NanNew<Array>(
-        NanNew<Integer>(data->count), 
+      NanNew(data->rows)->Set(
+        NanNew<Integer>(data->count),
         ODBC::GetRecordArray(
           self->m_hSTMT,
           self->columns,
           &self->colCount,
           self->buffer,
           self->bufferLength)
-        )
       );
     }
     else {
-      NanAssignPersistent(data->rows, NanNew<Array>(
+      NanNew(data->rows)->Set(
         NanNew<Integer>(data->count), 
         ODBC::GetRecordTuple(
           self->m_hSTMT,
@@ -537,7 +536,6 @@ void ODBCResult::UV_AfterFetchAll(uv_work_t* work_req, int status) {
           &self->colCount,
           self->buffer,
           self->bufferLength)
-        )
       );
     }
     data->count++;

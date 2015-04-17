@@ -108,7 +108,11 @@ class ODBC : public node::ObjectWrap {
     static void UV_CreateConnection(uv_work_t* work_req);
     static void UV_AfterCreateConnection(uv_work_t* work_req, int status);
     
+#if NODE_VERSION_AT_LEAST(0, 11, 13)
+    static void WatcherCallback(uv_async_t* w);
+#else
     static void WatcherCallback(uv_async_t* w, int revents);
+#endif
     
     //sync methods
     static NAN_METHOD(CreateConnectionSync);

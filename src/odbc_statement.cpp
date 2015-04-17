@@ -222,7 +222,7 @@ void ODBCStatement::UV_AfterExecute(uv_work_t* req, int status) {
                               GetFunction()->NewInstance(4, args));
 
     args[0] = NanNew<Value>(NanNull());
-    args[1] = NanNew<Object>(js_result);
+    args[1] = NanNew(js_result);
 
     TryCatch try_catch;
 
@@ -264,16 +264,16 @@ NAN_METHOD(ODBCStatement::ExecuteSync) {
     NanReturnValue(NanNull());
   }
   else {
-    Local<Value> args[4];
+    Local<Value> tArgs[4];
     bool* canFreeHandle = new bool(false);
     
-    args[0] = NanNew<External>(stmt->m_hENV);
-    args[1] = NanNew<External>(stmt->m_hDBC);
-    args[2] = NanNew<External>(stmt->m_hSTMT);
-    args[3] = NanNew<External>(canFreeHandle);
+    tArgs[0] = NanNew<External>(stmt->m_hENV);
+    tArgs[1] = NanNew<External>(stmt->m_hDBC);
+    tArgs[2] = NanNew<External>(stmt->m_hSTMT);
+    tArgs[3] = NanNew<External>(canFreeHandle);
     
     Local<Object> js_result(NanNew(ODBCResult::constructor_template)->
-                              GetFunction()->NewInstance(4, args));
+                              GetFunction()->NewInstance(4, tArgs));
     
     NanReturnValue(js_result);
   }
@@ -507,7 +507,7 @@ void ODBCStatement::UV_AfterExecuteDirect(uv_work_t* req, int status) {
                               GetFunction()->NewInstance(4, args));
 
     args[0] = NanNew<Value>(NanNull());
-    args[1] = NanNew<Object>(js_result);
+    args[1] = NanNew(js_result);
 
     TryCatch try_catch;
 
@@ -559,16 +559,16 @@ NAN_METHOD(ODBCStatement::ExecuteDirectSync) {
     NanReturnValue(NanNull());
   }
   else {
-    Local<Value> args[4];
+    Local<Value> tArgs[4];
     bool* canFreeHandle = new bool(false);
     
-    args[0] = NanNew<External>(stmt->m_hENV);
-    args[1] = NanNew<External>(stmt->m_hDBC);
-    args[2] = NanNew<External>(stmt->m_hSTMT);
-    args[3] = NanNew<External>(canFreeHandle);
+    tArgs[0] = NanNew<External>(stmt->m_hENV);
+    tArgs[1] = NanNew<External>(stmt->m_hDBC);
+    tArgs[2] = NanNew<External>(stmt->m_hSTMT);
+    tArgs[3] = NanNew<External>(canFreeHandle);
     
     Local<Object> js_result(NanNew(ODBCResult::constructor_template)->
-                              GetFunction()->NewInstance(4, args));
+                              GetFunction()->NewInstance(4, tArgs));
     
     NanReturnValue(js_result);
   }

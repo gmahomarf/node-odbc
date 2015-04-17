@@ -39,6 +39,60 @@
 using namespace v8;
 using namespace node;
 
+// Redefining our own version of NODE_DEFINE_CONSTANT to allow for NAN
+// and some things NAN doesn't address
+// This may not be an absolute fix
+/*#if NODE_VERSION_AT_LEAST(0, 11, 15)
+#define MY_NODE_DEFINE_CONSTANT(target, constant)    \
+    (target)->ForceSet(                              \
+    	NanNew<String>(#constant),                     \
+    	NanNew<Number>(constant),                      \
+    	static_cast<v8::PropertyAttribute>(            \
+        v8::ReadOnly | v8::DontDelete)               \
+    	)
+#else*/
+#define MY_NODE_DEFINE_CONSTANT(target, constant)    \
+    (target)->Set(                                   \
+    	NanNew<String>(#constant),                     \
+    	NanNew<Number>(constant),                      \
+    	static_cast<v8::PropertyAttribute>(            \
+        v8::ReadOnly | v8::DontDelete)               \
+    	)
+//#endif
+/*
+#define NODE_DEFINE_CONSTANT(target, constant)                                \
+  do {                                                                        \
+    v8::Isolate* isolate = v8::Isolate::GetCurrent();                         \
+    v8::Local<v8::String> constant_name =                                     \
+        v8::String::NewFromUtf8(isolate, #constant);                          \
+    v8::Local<v8::Number> constant_value =                                    \
+        v8::Number::New(isolate, static_cast<double>(constant));              \
+    v8::PropertyAttribute constant_attributes =                               \
+        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete);    \
+    (target)->ForceSet(constant_name, constant_value, constant_attributes);   \
+  }                                                                           \
+  while (0)
+
+#define NODE_DEFINE_CONSTANT(target, constant)                                \
+  do {                                                                        \
+    v8::Isolate* isolate = v8::Isolate::GetCurrent();                         \
+    v8::Local<v8::String> constant_name =                                     \
+        v8::String::NewFromUtf8(isolate, #constant);                          \
+    v8::Local<v8::Number> constant_value =                                    \
+        v8::Number::New(isolate, static_cast<double>(constant));              \
+    v8::PropertyAttribute constant_attributes =                               \
+        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete);    \
+    (target)->Set(constant_name, constant_value, constant_attributes);        \
+  }                                                                           \
+  while (0)
+
+#define NODE_DEFINE_CONSTANT(target, constant)                            \
+  (target)->Set(v8::String::NewSymbol(#constant),                         \
+                v8::Number::New(constant),                                \
+                static_cast<v8::PropertyAttribute>(                       \
+                    v8::ReadOnly|v8::DontDelete))
+*/
+
 uv_mutex_t ODBC::g_odbcMutex;
 uv_async_t ODBC::g_async;
 
@@ -58,13 +112,13 @@ void ODBC::Init(v8::Handle<Object> target) {
   instance_template->SetInternalFieldCount(1);
   
   // Constants
-  NODE_DEFINE_CONSTANT(t, SQL_CLOSE);
-  NODE_DEFINE_CONSTANT(t, SQL_DROP);
-  NODE_DEFINE_CONSTANT(t, SQL_UNBIND);
-  NODE_DEFINE_CONSTANT(t, SQL_RESET_PARAMS);
-  NODE_DEFINE_CONSTANT(t, SQL_DESTROY); //SQL_DESTROY is non-standard
-  NODE_DEFINE_CONSTANT(t, FETCH_ARRAY);
-  NODE_DEFINE_CONSTANT(t, FETCH_OBJECT);
+  MY_NODE_DEFINE_CONSTANT(t, SQL_CLOSE);
+  MY_NODE_DEFINE_CONSTANT(t, SQL_DROP);
+  MY_NODE_DEFINE_CONSTANT(t, SQL_UNBIND);
+  MY_NODE_DEFINE_CONSTANT(t, SQL_RESET_PARAMS);
+  MY_NODE_DEFINE_CONSTANT(t, SQL_DESTROY); //SQL_DESTROY is non-standard
+  MY_NODE_DEFINE_CONSTANT(t, FETCH_ARRAY);
+  MY_NODE_DEFINE_CONSTANT(t, FETCH_OBJECT);
   
   // Prototype Methods
   NODE_SET_PROTOTYPE_METHOD(t, "createConnection", CreateConnection);
@@ -142,7 +196,12 @@ NAN_METHOD(ODBC::New) {
   NanReturnHolder();
 }
 
+#if NODE_VERSION_AT_LEAST(0, 11, 13)
+void ODBC::WatcherCallback(uv_async_t *w) {
+#else
 void ODBC::WatcherCallback(uv_async_t *w, int revents) {
+#endif
+
   DEBUG_PRINTF("ODBC::WatcherCallback\n");
   //i don't know if we need to do anything here
 }
@@ -216,7 +275,7 @@ void ODBC::UV_AfterCreateConnection(uv_work_t* req, int status) {
                               GetFunction()->NewInstance(2, args));
 
     args[0] = NanNew<Value>(NanNull());
-    args[1] = NanNew<Object>(js_result);
+    args[1] = NanNew(js_result);
 
     data->cb->Call(NanGetCurrentContext()->Global(), 2, args);
   }
@@ -596,7 +655,7 @@ Handle<Value> ODBC::GetColumnValue( SQLHSTMT hStmt, Column column,
           //Not sure if throwing here will work out well for us but we can try
           //since we should have a valid handle and the error is something we 
           //can look into
-          return NanThrowError(ODBC::GetSQLError(
+          NanThrowError(ODBC::GetSQLError(
              SQL_HANDLE_STMT,
              hStmt,
              (char *) "[node-odbc] Error in ODBC::GetColumnValue"
@@ -889,7 +948,7 @@ Local<Object> ODBC::GetSQLError (SQLSMALLINT handleType, SQLHANDLE handle, char*
       (const char *) "[node-odbc] An error occurred but no diagnostic information was available."));
   }
 
-  return NanEscapeScope(objError);
+  return NanEscapeScope(NanNew(objError));
 }
 
 /*
