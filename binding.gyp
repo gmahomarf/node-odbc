@@ -10,7 +10,7 @@
         'src/dynodbc.cpp'
       ],
       'include_dirs' : [ 
-          '<!(node -e "require(\'nan\')")'
+          '<!(node -e "require(\'nan\')" || nodejs -e "require(\'nan\')")'
       ],
       'defines' : [
         'UNICODE'
