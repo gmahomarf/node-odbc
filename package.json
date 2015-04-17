@@ -28,11 +28,12 @@
     "node": ">=0.8.0"
   },
   "scripts": {
-    "preinstall": "node-gyp configure build",
+    "preinstall": "true",
+    "postinstall": "node-gyp configure build",
     "test": "cd test && node run-tests.js"
   },
   "dependencies": {
     "bindings": "~1.0.0",
-    "nan": "^1.7.0"
+    "nan": "https://github.com/iojs/nan/tarball/v8_4_3"
   }
 }
