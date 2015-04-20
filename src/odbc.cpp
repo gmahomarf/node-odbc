@@ -435,7 +435,7 @@ Handle<Value> ODBC::GetColumnValue( SQLHSTMT hStmt, Column column,
           //return NanNull();
         }
         else {
-          return NanEscapeScope(NanNew<Integer>(value));
+          return NanEscapeScope(NanNew<Number>(value));
           //return NanNew<Integer>(value);
         }
       }
